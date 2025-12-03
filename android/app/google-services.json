@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "986909149316",
+    "project_id": "loginapp-b6fa2",
+    "storage_bucket": "loginapp-b6fa2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:986909149316:android:4744ff2a2ab1323319dad1",
+        "android_client_info": {
+          "package_name": "com.example.testflutter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAivCupOXXSnPv11RNJEi16iQThQLP0mkw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
