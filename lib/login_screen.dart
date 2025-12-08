@@ -50,13 +50,12 @@ class LoginScreen extends StatelessWidget {
           onPressed: () async {
             User? user = await signInWithGoogle(context);
 
+
             if (user != null) {
-              // ⭐⭐ 1) نحفظ إن المستخدم logged in
               SharedPreferences prefs =
               await SharedPreferences.getInstance();
               await prefs.setBool('isLoggedIn', true);
 
-              // ⭐⭐ 2) نعمل نافيجيت للـ gallery
               Navigator.pushReplacementNamed(context, '/gallery');
             }
           },
