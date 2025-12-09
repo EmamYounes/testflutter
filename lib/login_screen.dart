@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:testflutter/user_data_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -12,9 +14,7 @@ class LoginScreen extends StatelessWidget {
       final GoogleSignInAccount? googleUser =
       await GoogleSignIn().signIn();
 
-      if (googleUser == null) {
-        return null; // user canceled
-      }
+      if (googleUser == null) return null; // user canceled the login
 
       final GoogleSignInAuthentication googleAuth =
       await googleUser.authentication;
@@ -28,12 +28,23 @@ class LoginScreen extends StatelessWidget {
       await FirebaseAuth.instance.signInWithCredential(credential);
 
       return userCredential.user;
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Login failed: $e')),
       );
       return null;
     }
+  }
+
+  // Check if user data exists in Firestore
+  Future<bool> doesUserDataExist(String uid) async {
+    var doc = await FirebaseFirestore.instance
+        .collection("users")
+        .doc(uid)
+        .get();
+
+    return doc.exists;
   }
 
   @override
@@ -48,15 +59,26 @@ class LoginScreen extends StatelessWidget {
           icon: const Icon(Icons.login),
           label: const Text("Sign in with Google"),
           onPressed: () async {
+
             User? user = await signInWithGoogle(context);
 
-
             if (user != null) {
-              SharedPreferences prefs =
-              await SharedPreferences.getInstance();
+              SharedPreferences prefs = await SharedPreferences.getInstance();
               await prefs.setBool('isLoggedIn', true);
 
-              Navigator.pushReplacementNamed(context, '/gallery');
+              bool dataExists = await doesUserDataExist(user.uid);
+
+
+              if (dataExists) {
+
+                Navigator.pushReplacementNamed(context, '/gallery');
+              } else {
+
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => UserDataScreen()),
+                );
+              }
             }
           },
         ),

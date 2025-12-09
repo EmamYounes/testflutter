@@ -13,13 +13,15 @@ dependencies:
 
   cupertino_icons: ^1.0.8
 
+  # Firebase Packages (compatible versions)
   firebase_core: ^2.16.0
   firebase_auth: ^4.16.0
+  cloud_firestore: ^4.17.5
   google_sign_in: ^6.1.6
+
   shared_preferences: ^2.2.2
 
   lottie: ^3.1.0
-
 
   rxdart: ^0.28.0
 
