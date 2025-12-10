@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'home_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -50,13 +50,13 @@ class LoginScreen extends StatelessWidget {
           onPressed: () async {
             User? user = await signInWithGoogle(context);
 
+
             if (user != null) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => HomeScreen(user: user),
-                ),
-              );
+              SharedPreferences prefs =
+              await SharedPreferences.getInstance();
+              await prefs.setBool('isLoggedIn', true);
+
+              Navigator.pushReplacementNamed(context, '/gallery');
             }
           },
         ),
@@ -64,119 +64,3 @@ class LoginScreen extends StatelessWidget {
     );
   }
 }
-
-
-
-
-// import 'package:flutter/material.dart';
-// import 'auth_service.dart';
-// import 'home_screen.dart';
-//
-// // class LoginScreen extends StatelessWidget {
-// //   @override
-// //   Widget build(BuildContext context) {
-// //     print("Login screen is running ✅");
-// //
-// //     return Scaffold(
-// //       backgroundColor: Colors.white,
-// //       body: Center(
-// //         child: ElevatedButton(
-// //           onPressed: () async {
-// //             final user = await AuthService.signInWithGoogle();
-// //             if (user != null) {
-// //               Navigator.pushReplacement(
-// //                 context,
-// //                 MaterialPageRoute(
-// //                   builder: (_) => HomeScreen(user: user),
-// //                 ),
-// //               );
-// //             }
-// //           },
-// //           child: const Text("Sign in with Google"),
-// //         ),
-// //       ),
-// //     );
-// //   }
-// // }
-// //............................................
-// // class LoginScreen extends StatelessWidget {
-// //   @override
-// //   Widget build(BuildContext context) {
-// //     print("Login screen is running ✅");
-// //
-// //     return Scaffold(
-// //       backgroundColor: Colors.white,
-// //       body: Center(
-// //         child: ElevatedButton(
-// //           onPressed: () async {
-// //             final user = await AuthService.signInWithGoogle();
-// //
-// //             if (user != null) {
-// //               Navigator.pushReplacement(
-// //                 context,
-// //                 MaterialPageRoute(
-// //                   builder: (_) => HomeScreen(user: user),
-// //                 ),
-// //               );
-// //             } else {
-// //               ScaffoldMessenger.of(context).showSnackBar(
-// //                 SnackBar(
-// //                   content: Text("Login failed, please try again"),
-// //                 ),
-// //               );
-// //             }
-// //           },
-// //           child: const Text("Sign in with Google"),
-// //         ),
-// //       ),
-// //     );
-// //   }
-// // }
-// class LoginScreen extends StatefulWidget {
-//   @override
-//   State<LoginScreen> createState() => _LoginScreenState();
-// }
-//
-// class _LoginScreenState extends State<LoginScreen> {
-//   bool isLoading = false;
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: Colors.white,
-//       body: Center(
-//         child: isLoading
-//             ? CircularProgressIndicator()
-//             : ElevatedButton(
-//           onPressed: () async {
-//             setState(() {
-//               isLoading = true;
-//             });
-//
-//             final user = await AuthService.signInWithGoogle();
-//
-//             setState(() {
-//               isLoading = false;
-//             });
-//
-//             if (user != null) {
-//               Navigator.pushReplacement(
-//                 context,
-//                 MaterialPageRoute(
-//                   builder: (_) => HomeScreen(user: user),
-//                 ),
-//               );
-//             } else {
-//               ScaffoldMessenger.of(context).showSnackBar(
-//                 SnackBar(
-//                   content: Text("Login failed, please try again"),
-//                 ),
-//               );
-//             }
-//           },
-//           child: Text("Sign in with Google"),
-//         ),
-//       ),
-//     );
-//   }
-// }
