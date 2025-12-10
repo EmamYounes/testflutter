@@ -59,31 +59,3 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-// import 'package:flutter/material.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
-//
-// class HomeScreen extends StatelessWidget {
-//   final User user;
-//
-//   const HomeScreen({required this.user});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(title: Text("Welcome")),
-//       body: Center(
-//         child: Column(
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: [
-//             Text("Hello, ${user.displayName}"),
-//             CircleAvatar(
-//               radius: 40,
-//               backgroundImage: NetworkImage(user.photoURL!),
-//             ),
-//             Text(user.email!),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
