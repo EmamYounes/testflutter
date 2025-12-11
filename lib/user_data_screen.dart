@@ -25,8 +25,17 @@ class _UserDataScreenState extends State<UserDataScreen> {
     loadUserData();
   }
 
+  /// تحميل بيانات المستخدم
   Future<void> loadUserData() async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final auth = FirebaseAuth.instance;
+    User? user = auth.currentUser;
+
+    // لو مفيش مستخدم → نعمل تسجيل Anonymous تلقائي
+    if (user == null) {
+      user = (await auth.signInAnonymously()).user;
+    }
+
+    final uid = user!.uid;
 
     var doc = await FirebaseFirestore.instance.collection("users").doc(uid).get();
 
@@ -42,6 +51,7 @@ class _UserDataScreenState extends State<UserDataScreen> {
     setState(() => isLoading = false);
   }
 
+  /// حفظ البيانات
   Future<void> saveData() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -56,7 +66,7 @@ class _UserDataScreenState extends State<UserDataScreen> {
     }, SetOptions(merge: true));
 
     ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("تم حفظ البيانات بنجاح"))
+      SnackBar(content: Text("تم حفظ البيانات بنجاح")),
     );
   }
 
@@ -72,7 +82,6 @@ class _UserDataScreenState extends State<UserDataScreen> {
           key: _formKey,
           child: ListView(
             children: [
-
               // NAME
               TextFormField(
                 controller: nameController,
@@ -150,6 +159,7 @@ class _UserDataScreenState extends State<UserDataScreen> {
               SizedBox(height: 15),
 
               Text("Gender", style: TextStyle(fontSize: 18)),
+
               RadioListTile(
                 title: Text("Male"),
                 value: "Male",

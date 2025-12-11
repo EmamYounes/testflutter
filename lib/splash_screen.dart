@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:testflutter/user_data_screen.dart';
 import 'splash_service.dart';
 import 'login_screen.dart';
 
@@ -29,7 +30,7 @@ class _SplashScreenState extends State<SplashScreen> {
       } else {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          MaterialPageRoute(builder: (context) =>  const LoginScreen()),
         );
       }
     });
