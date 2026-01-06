@@ -2,22 +2,24 @@ import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashService {
-  final BehaviorSubject<bool> _loginState = BehaviorSubject<bool>();
+  final _loginStateController = BehaviorSubject<bool>();
 
-  Stream<bool> get loginStateStream => _loginState.stream;
+  Stream<bool> get loginStateStream => _loginStateController.stream;
 
   SplashService() {
-    _init();
+    _checkLoginState();
   }
 
-  void _init() async {
-    await Future.delayed(const Duration(seconds: 5));
+  Future<void> _checkLoginState() async {
+    await Future.delayed(const Duration(seconds: 3));
+
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-    _loginState.add(isLoggedIn);
+
+    _loginStateController.add(isLoggedIn);
   }
 
   void dispose() {
-    _loginState.close();
+    _loginStateController.close();
   }
 }

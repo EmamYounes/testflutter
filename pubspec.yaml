@@ -13,22 +13,34 @@ dependencies:
 
   cupertino_icons: ^1.0.8
 
-  # Firebase Packages (compatible versions)
-  firebase_core: ^2.16.0
-  firebase_auth: ^4.16.0
+  # Firebase
+  firebase_core: ^2.32.0
+  firebase_auth: ^4.20.0
   cloud_firestore: ^4.17.5
-  google_sign_in: ^6.1.6
 
-  shared_preferences: ^2.2.2
+  # Google Sign In
+  google_sign_in: ^6.3.0
 
+  # Local Storage & UI
+  shared_preferences: ^2.5.3
   lottie: ^3.1.0
+  rxdart: ^0.27.7
 
-  rxdart: ^0.28.0
+  # Image & Network
+  image_picker: ^1.2.1
+  connectivity_plus: ^5.0.2
+  http: ^1.6.0
+
+  # Gemini AI
+  google_generative_ai: ^0.4.7
+
+  # Path & Sharing
+  path_provider: ^2.0.15
+  share_plus: ^8.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
   flutter_lints: ^5.0.0
 
 flutter:
