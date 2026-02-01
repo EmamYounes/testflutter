@@ -25,11 +25,10 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
-        '/': (context) => const SplashScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/userData': (context) => UserDataScreen(),
-        '/gallery': (context) => GalleryScreen(),
-
+        '/': (_) => const SplashScreen(),
+        '/login': (_) => const LoginScreen(),
+        '/userData': (_) => const UserDataScreen(),
+        '/gallery': (_) => const GalleryScreen(),
       },
     );
   }

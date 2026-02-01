@@ -7,9 +7,7 @@ class LoginScreen extends StatelessWidget {
 
   Future<User?> signInWithGoogle(BuildContext context) async {
     try {
-      final GoogleSignInAccount? googleUser =
-      await GoogleSignIn().signIn();
-
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) return null;
 
       final googleAuth = await googleUser.authentication;
@@ -20,8 +18,7 @@ class LoginScreen extends StatelessWidget {
       );
 
       final userCredential =
-      await FirebaseAuth.instance
-          .signInWithCredential(credential);
+      await FirebaseAuth.instance.signInWithCredential(credential);
 
       return userCredential.user;
     } catch (e) {
@@ -41,15 +38,10 @@ class LoginScreen extends StatelessWidget {
           icon: const Icon(Icons.login),
           label: const Text('Sign in with Google'),
           onPressed: () async {
-            User? user = await signInWithGoogle(context);
-
+            final user = await signInWithGoogle(context);
             if (user == null) return;
 
-
-            Navigator.pushReplacementNamed(
-              context,
-              '/userData',
-            );
+            Navigator.pushReplacementNamed(context, '/userData');
           },
         ),
       ),
