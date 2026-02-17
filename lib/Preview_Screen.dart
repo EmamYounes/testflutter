@@ -30,21 +30,40 @@ class PreviewScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(
+        title: Text(title),
+        backgroundColor: Colors.purple,
+        foregroundColor: Colors.white,
+      ),
+
       body: Column(
         children: [
           Expanded(
             child: Image.memory(imageBytes),
           ),
+
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-                onPressed: saveImage, child: const Text("Save")),
+              onPressed: saveImage,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.purple,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: const Text("Save", style: TextStyle(color: Colors.white)),
+            ),
           ),
+
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-                onPressed: shareImage, child: const Text("Share")),
+              onPressed: shareImage,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.purple,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: const Text("Share", style: TextStyle(color: Colors.white)),
+            ),
           ),
         ],
       ),

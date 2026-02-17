@@ -1,15 +1,21 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+
 import 'horde_service.dart';
 import 'preview_screen.dart';
-import 'dart:typed_data';
-
 
 class UploadImageScreen extends StatefulWidget {
   final String title;
+  final String prompt;
 
-  const UploadImageScreen({super.key, required this.title});
+  const UploadImageScreen({
+    super.key,
+    required this.title,
+    required this.prompt,
+  });
 
   @override
   State<UploadImageScreen> createState() => _UploadImageScreenState();
@@ -17,94 +23,93 @@ class UploadImageScreen extends StatefulWidget {
 
 class _UploadImageScreenState extends State<UploadImageScreen> {
   File? userImage;
-  final picker = ImagePicker();
-  final promptController = TextEditingController();
   bool isLoading = false;
+  final ImagePicker picker = ImagePicker();
 
+  /// اختيار صورة من المعرض
   Future<void> pickImage() async {
-    final XFile? picked = await picker.pickImage(source: ImageSource.gallery);
+    final XFile? picked =
+    await picker.pickImage(source: ImageSource.gallery);
 
     if (picked != null) {
-      setState(() => userImage = File(picked.path));
+      setState(() {
+        userImage = File(picked.path);
+      });
     }
   }
 
-  Future<void> generateOnly() async {
-    if (promptController.text.trim().isEmpty) {
-      showMsg("أكتبي Prompt الأول");
-      return;
-    }
-
-    setState(() => isLoading = true);
-
-    try {
-      final bytes =
-      await HordeService.generate(prompt: promptController.text.trim());
-
-      goToPreview(bytes);
-    } catch (e) {
-      showMsg("Error: $e");
-    }
-
-    setState(() => isLoading = false);
+  /// تحقق من الإنترنت
+  Future<bool> hasInternet() async {
+    final connectivityResult =
+    await Connectivity().checkConnectivity();
+    return connectivityResult != ConnectivityResult.none;
   }
 
-  Future<void> editImage() async {
+  /// تنفيذ التعديل باستخدام AI Horde
+  Future<void> submitImage() async {
     if (userImage == null) {
-      showMsg("اختاري صورة الأول");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please upload image first")),
+      );
       return;
     }
-    if (promptController.text.trim().isEmpty) {
-      showMsg("أكتبي Prompt الأول");
+
+    if (!await hasInternet()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No Internet Connection")),
+      );
       return;
     }
 
     setState(() => isLoading = true);
 
     try {
-      final bytes = await HordeService.edit(
+      /// 🔥 استدعاء Horde img2img
+      Uint8List bytes = await HordeService.edit(
         image: userImage!,
-        prompt: promptController.text.trim(),
+        prompt: widget.prompt,
       );
 
-      goToPreview(bytes);
-    } catch (e) {
-      showMsg("Error: $e");
-    }
+      if (!mounted) return;
 
-    setState(() => isLoading = false);
-  }
-
-  void goToPreview(Uint8List bytes) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PreviewScreen(
-          imageBytes: bytes,
-          title: widget.title,
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PreviewScreen(
+            imageBytes: bytes,   // 👈 متوافق مع البريفيو
+            title: widget.title, // 👈 متوافق مع البريفيو
+          ),
         ),
-      ),
-    );
-  }
-
-  void showMsg(String msg) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg)));
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    } finally {
+      setState(() => isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      appBar: AppBar(
+        title: Text(widget.title),
+        backgroundColor: Colors.purple,
+        foregroundColor: Colors.white,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            TextField(
-              controller: promptController,
-              decoration: const InputDecoration(
-                labelText: "Prompt",
-                border: OutlineInputBorder(),
+            const SizedBox(height: 20),
+
+            /// عرض اسم الستايل
+            Text(
+              "Style: ${widget.title}",
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
             ),
 
@@ -112,34 +117,44 @@ class _UploadImageScreenState extends State<UploadImageScreen> {
 
             ElevatedButton(
               onPressed: pickImage,
-              child: const Text("Upload Image for Editing"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.purple,
+              ),
+              child: const Text(
+                "Upload Image",
+                style: TextStyle(color: Colors.white),
+              ),
             ),
 
+            const SizedBox(height: 20),
+
             if (userImage != null)
-              Image.file(userImage!, height: 180),
+              Image.file(
+                userImage!,
+                height: 200,
+              ),
 
             const Spacer(),
 
-            if (!isLoading)
-              Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                        onPressed: generateOnly,
-                        child: const Text("Generate From Prompt")),
-                  ),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                        onPressed: editImage,
-                        child: const Text("Edit Uploaded Image")),
-                  ),
-                ],
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : submitImage,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purple,
+                  padding:
+                  const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: isLoading
+                    ? const CircularProgressIndicator(
+                  color: Colors.white,
+                )
+                    : const Text(
+                  "Generate",
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
-
-            if (isLoading)
-              const CircularProgressIndicator(),
+            ),
           ],
         ),
       ),

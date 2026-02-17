@@ -9,6 +9,7 @@ import 'gallery_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -25,10 +26,10 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
-        '/': (_) => const SplashScreen(),
-        '/login': (_) => const LoginScreen(),
-        '/userData': (_) => const UserDataScreen(),
-        '/gallery': (_) => const GalleryScreen(),
+        '/': (context) => const SplashScreen(),
+        '/login': (context) => LoginScreen(),
+        '/userData': (context) => const UserDataScreen(),
+        '/gallery': (context) => const GalleryScreen(),
       },
     );
   }
