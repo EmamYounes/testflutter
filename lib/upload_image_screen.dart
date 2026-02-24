@@ -1,13 +1,13 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'horde_service.dart';
-import 'preview_screen.dart';
+import 'bloc/user_data/upload_bloc.dart';
+import 'bloc/user_data/upload_event.dart';
+import 'bloc/user_data/upload_state.dart';
+import 'Preview_Screen.dart';
 
-class UploadImageScreen extends StatefulWidget {
+class UploadImageScreen extends StatelessWidget {
   final String title;
   final String prompt;
 
@@ -18,144 +18,135 @@ class UploadImageScreen extends StatefulWidget {
   });
 
   @override
-  State<UploadImageScreen> createState() => _UploadImageScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => UploadBloc(),
+      child: UploadView(title: title, prompt: prompt),
+    );
+  }
 }
 
-class _UploadImageScreenState extends State<UploadImageScreen> {
-  File? userImage;
-  bool isLoading = false;
-  final ImagePicker picker = ImagePicker();
+class UploadView extends StatelessWidget {
+  final String title;
+  final String prompt;
 
-  /// اختيار صورة من المعرض
-  Future<void> pickImage() async {
-    final XFile? picked =
-    await picker.pickImage(source: ImageSource.gallery);
-
-    if (picked != null) {
-      setState(() {
-        userImage = File(picked.path);
-      });
-    }
-  }
-
-  /// تحقق من الإنترنت
-  Future<bool> hasInternet() async {
-    final connectivityResult =
-    await Connectivity().checkConnectivity();
-    return connectivityResult != ConnectivityResult.none;
-  }
-
-  /// تنفيذ التعديل باستخدام AI Horde
-  Future<void> submitImage() async {
-    if (userImage == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please upload image first")),
-      );
-      return;
-    }
-
-    if (!await hasInternet()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No Internet Connection")),
-      );
-      return;
-    }
-
-    setState(() => isLoading = true);
-
-    try {
-      /// 🔥 استدعاء Horde img2img
-      Uint8List bytes = await HordeService.edit(
-        image: userImage!,
-        prompt: widget.prompt,
-      );
-
-      if (!mounted) return;
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => PreviewScreen(
-            imageBytes: bytes,   // 👈 متوافق مع البريفيو
-            title: widget.title, // 👈 متوافق مع البريفيو
-          ),
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
-    } finally {
-      setState(() => isLoading = false);
-    }
-  }
+  const UploadView({
+    super.key,
+    required this.title,
+    required this.prompt,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(title),
         backgroundColor: Colors.purple,
         foregroundColor: Colors.white,
       ),
+
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
+        child: BlocConsumer<UploadBloc, UploadState>(
+          listener: (context, state) {
+            if (state is UploadError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message)),
+              );
+            }
 
-            /// عرض اسم الستايل
-            Text(
-              "Style: ${widget.title}",
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: pickImage,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple,
-              ),
-              child: const Text(
-                "Upload Image",
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            if (userImage != null)
-              Image.file(
-                userImage!,
-                height: 200,
-              ),
-
-            const Spacer(),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: isLoading ? null : submitImage,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple,
-                  padding:
-                  const EdgeInsets.symmetric(vertical: 14),
+            if (state is ImageGeneratedState) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PreviewScreen(
+                    imageBytes: state.imageBytes,
+                    title: title,
+                  ),
                 ),
-                child: isLoading
-                    ? const CircularProgressIndicator(
-                  color: Colors.white,
-                )
-                    : const Text(
-                  "Generate",
-                  style: TextStyle(color: Colors.white),
+              );
+            }
+          },
+
+          builder: (context, state) {
+            final bloc = context.read<UploadBloc>();
+            File? image;
+
+            if (state is ImagePickedState) {
+              image = state.image;
+            }
+
+            return Column(
+              children: [
+                const SizedBox(height: 20),
+
+                Text(
+                  "Style: $title",
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-              ),
-            ),
-          ],
+
+                const SizedBox(height: 20),
+
+                ElevatedButton(
+                  onPressed: () {
+                    bloc.add(PickImageEvent());
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                  ),
+                  child: const Text(
+                    "Upload Image",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                if (image != null)
+                  Image.file(
+                    image,
+                    height: 200,
+                  ),
+
+                const Spacer(),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: state is UploadLoading
+                        ? null
+                        : () {
+                      if (image == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text("Please upload image")),
+                        );
+                        return;
+                      }
+
+                      bloc.add(
+                        GenerateImageEvent(
+                          image: image!,
+                          prompt: prompt,
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.purple,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: state is UploadLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                      "Generate",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

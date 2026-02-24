@@ -35,6 +35,10 @@ dependencies:
   path_provider: ^2.1.2
   share_plus: ^8.0.0
 
+  # BLoC
+  flutter_bloc: ^8.1.4
+  equatable: ^2.0.5
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

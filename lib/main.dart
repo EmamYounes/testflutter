@@ -7,9 +7,11 @@ import 'login_screen.dart';
 import 'user_data_screen.dart';
 import 'gallery_screen.dart';
 
+import 'bloc/user_data/user_data_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -28,7 +30,10 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const SplashScreen(),
         '/login': (context) => LoginScreen(),
-        '/userData': (context) => const UserDataScreen(),
+        '/userData': (context) => BlocProvider(
+          create: (_) => UserDataBloc(),
+          child: const UserDataScreen(),
+        ),
         '/gallery': (context) => const GalleryScreen(),
       },
     );

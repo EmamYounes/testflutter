@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-import 'user_service.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'bloc/user_data/user_data_bloc.dart';
+import 'bloc/user_data/user_data_event.dart';
+import 'bloc/user_data/user_data_state.dart';
 
 class UserDataScreen extends StatefulWidget {
   const UserDataScreen({super.key});
@@ -17,13 +21,12 @@ class _UserDataScreenState extends State<UserDataScreen> {
   final heightController = TextEditingController();
 
   String? gender;
-  bool isLoading = true;
-  bool isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    loadUserData();
+    // نطلب تحميل البيانات أول ما الصفحة تفتح
+    context.read<UserDataBloc>().add(const LoadUserDataEvent());
   }
 
   @override
@@ -35,134 +38,131 @@ class _UserDataScreenState extends State<UserDataScreen> {
     super.dispose();
   }
 
-  Future<void> loadUserData() async {
-    try {
-      final data = await UserService.loadUserData();
-
-      if (data != null) {
-        nameController.text = (data['name'] ?? '').toString();
-        ageController.text = (data['age'] ?? '').toString();
-        weightController.text = (data['weight'] ?? '').toString();
-        heightController.text = (data['height'] ?? '').toString();
-        gender = data['gender'];
-      }
-    } catch (e) {
-      debugPrint("Load Error: $e");
-    }
-
-    if (mounted) {
-      setState(() => isLoading = false);
-    }
-  }
-
-  Future<void> saveData() async {
+  void _onSavePressed() {
     if (!_formKey.currentState!.validate()) return;
 
-    if (gender == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select gender")),
-      );
-      return;
-    }
+    final bloc = context.read<UserDataBloc>();
 
-    setState(() => isSaving = true);
-
-    try {
-      await UserService.saveUserData(
+    bloc.add(
+      SaveUserDataEvent(
         name: nameController.text.trim(),
         age: int.tryParse(ageController.text) ?? 0,
         weight: double.tryParse(weightController.text) ?? 0.0,
         height: double.tryParse(heightController.text) ?? 0.0,
         gender: gender,
-      );
-
-      if (!mounted) return;
-
-      Navigator.pushReplacementNamed(context, '/gallery');
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => isSaving = false);
-      }
-    }
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('User Data')),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              TextFormField(
-                controller: nameController,
-                decoration:
-                const InputDecoration(labelText: 'Name'),
-                validator: (v) =>
-                v == null || v.isEmpty ? 'Required' : null,
-              ),
-              TextFormField(
-                controller: ageController,
-                decoration:
-                const InputDecoration(labelText: 'Age'),
-                keyboardType: TextInputType.number,
-                validator: (v) =>
-                v == null || v.isEmpty ? 'Required' : null,
-              ),
-              TextFormField(
-                controller: weightController,
-                decoration:
-                const InputDecoration(labelText: 'Weight'),
-                keyboardType: TextInputType.number,
-                validator: (v) =>
-                v == null || v.isEmpty ? 'Required' : null,
-              ),
-              TextFormField(
-                controller: heightController,
-                decoration:
-                const InputDecoration(labelText: 'Height'),
-                keyboardType: TextInputType.number,
-                validator: (v) =>
-                v == null || v.isEmpty ? 'Required' : null,
-              ),
+    return BlocListener<UserDataBloc, UserDataState>(
+      listenWhen: (prev, curr) =>
+      prev.error != curr.error || prev.saveSuccess != curr.saveSuccess,
+      listener: (context, state) {
+        if (state.error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: ${state.error}')),
+          );
+        }
 
-              const SizedBox(height: 16),
+        if (state.saveSuccess) {
+          Navigator.pushReplacementNamed(context, '/gallery');
+        }
 
-              RadioListTile<String>(
-                title: const Text('Male'),
-                value: 'Male',
-                groupValue: gender,
-                onChanged: (v) =>
-                    setState(() => gender = v),
-              ),
-              RadioListTile<String>(
-                title: const Text('Female'),
-                value: 'Female',
-                groupValue: gender,
-                onChanged: (v) =>
-                    setState(() => gender = v),
-              ),
+        // أول ما البيانات تتحمل، املى الكنترولرز
+        if (!state.loading && state.name != null) {
+          nameController.text = state.name ?? '';
+          ageController.text = state.age?.toString() ?? '';
+          weightController.text = state.weight?.toString() ?? '';
+          heightController.text = state.height?.toString() ?? '';
+          gender = state.gender;
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text('User Data')),
+        body: BlocBuilder<UserDataBloc, UserDataState>(
+          builder: (context, state) {
+            if (state.loading && state.name == null && state.error == null) {
+              // تحميل أولي
+              return const Center(child: CircularProgressIndicator());
+            }
 
-              const SizedBox(height: 20),
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      decoration:
+                      const InputDecoration(labelText: 'Name'),
+                      validator: (v) =>
+                      v == null || v.isEmpty ? 'Required' : null,
+                    ),
+                    TextFormField(
+                      controller: ageController,
+                      decoration:
+                      const InputDecoration(labelText: 'Age'),
+                      keyboardType: TextInputType.number,
+                      validator: (v) =>
+                      v == null || v.isEmpty ? 'Required' : null,
+                    ),
+                    TextFormField(
+                      controller: weightController,
+                      decoration:
+                      const InputDecoration(labelText: 'Weight'),
+                      keyboardType: TextInputType.number,
+                      validator: (v) =>
+                      v == null || v.isEmpty ? 'Required' : null,
+                    ),
+                    TextFormField(
+                      controller: heightController,
+                      decoration:
+                      const InputDecoration(labelText: 'Height'),
+                      keyboardType: TextInputType.number,
+                      validator: (v) =>
+                      v == null || v.isEmpty ? 'Required' : null,
+                    ),
 
-              ElevatedButton(
-                onPressed: isSaving ? null : saveData,
-                child: isSaving
-                    ? const CircularProgressIndicator(
-                  color: Colors.white,
-                )
-                    : const Text('Save'),
+                    const SizedBox(height: 16),
+
+                    RadioListTile<String>(
+                      title: const Text('Male'),
+                      value: 'Male',
+                      groupValue: gender,
+                      onChanged: (v) => setState(() => gender = v),
+                    ),
+                    RadioListTile<String>(
+                      title: const Text('Female'),
+                      value: 'Female',
+                      groupValue: gender,
+                      onChanged: (v) => setState(() => gender = v),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: state.loading ? null : _onSavePressed,
+                        child: state.loading
+                            ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                            : const Text('Save'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
